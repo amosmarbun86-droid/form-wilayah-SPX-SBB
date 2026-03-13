@@ -84,7 +84,7 @@ data_wilayah = [
     ("73", "Lumban Julu"),
     ("75", "Sosa 2"),
     ("76", "Sumbul"),
-    ("77", "Hutistak"),
+    ("77", "Huristak"),
     ("78", "Siempat Nempu"),
     ("79", "Hutaraja Tinggi"),
     ("80", "Salak"),
