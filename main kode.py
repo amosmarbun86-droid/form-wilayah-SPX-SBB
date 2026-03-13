@@ -121,11 +121,15 @@ if cursor.fetchone() is None:
     )
     conn.commit()
 
+# ================= SESSION =================
 if "login" not in st.session_state:
     st.session_state.login = False
 
+# ================= LOGIN PAGE =================
 if not st.session_state.login:
-    st.title("Login Admin")
+
+    st.title("🔐 Login Admin")
+
     u = st.text_input("Username")
     p = st.text_input("Password", type="password")
 
@@ -135,13 +139,38 @@ if not st.session_state.login:
             st.rerun()
         else:
             st.error("Login salah")
+
+# ================= DASHBOARD =================
 else:
-    st.title("Dashboard Admin")
+
+    # ===== APPBAR =====
+    st.markdown("""
+    <style>
+    .appbar{
+        background:#1f2937;
+        padding:15px;
+        border-radius:10px;
+        color:white;
+        font-size:22px;
+        font-weight:bold;
+        text-align:center;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="appbar">📦 Dashboard Wilayah Paket</div>', unsafe_allow_html=True)
+
+    st.write("")
 
     if st.button("Logout"):
         st.session_state.login = False
         st.rerun()
 
+    # ===== SEARCH =====
+    st.subheader("🔎 Cari Wilayah")
+    search = st.text_input("Ketik nama wilayah")
+
+    # ===== FORM TAMBAH =====
     with st.form("form"):
         kode = st.text_input("Kode Paket")
         nama = st.text_input("Nama Wilayah")
@@ -155,8 +184,16 @@ else:
             )
             conn.commit()
             st.success("Data disimpan")
+            st.rerun()
         except:
             st.error("Kode sudah ada")
 
+    # ===== TAMPILKAN DATA =====
     cursor.execute("SELECT kode_paket, nama_wilayah FROM wilayah")
-    st.table(cursor.fetchall())
+    data = cursor.fetchall()
+
+    # Filter Search
+    if search:
+        data = [d for d in data if search.lower() in d[1].lower()]
+
+    st.table(data)
