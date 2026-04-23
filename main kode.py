@@ -82,6 +82,7 @@ data_wilayah = [
 ("71","Angkola Timur"),
 ("72","Muara Batang Toru"),
 ("73","Lumban Julu"),
+("74","Lubuk barumun"),
 ("75","Sosa 2"),
 ("76","Sumbul"),
 ("77","Huristak"),
@@ -91,7 +92,11 @@ data_wilayah = [
 ("81","Singkohor"),
 ("82","Ranto Baek-baek"),
 ("84","Siantar Naromonda"),
-("90","Angkola Selatan")
+("86","Simanindo"),
+("90","Angkola Selatan"),
+("91","palipi"),
+("92","Adian koting"),
+("93","Rundeng"),
 ]
 
 cursor.execute("SELECT COUNT(*) FROM wilayah")
