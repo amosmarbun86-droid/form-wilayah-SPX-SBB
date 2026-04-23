@@ -2,6 +2,9 @@ import streamlit as st
 import sqlite3
 import folium
 from streamlit_folium import st_folium
+import os
+
+os.makedirs("data", exist_ok=True)
 
 st.title("🚚 Dashboard Logistik Wilayah")
 
