@@ -3,7 +3,7 @@ import sqlite3
 import folium
 from streamlit_folium import st_folium
 import os
-
+st.write(data)
 st.title("🚚 Dashboard Logistik Wilayah")
 
 # ================= SETUP =================
