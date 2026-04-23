@@ -14,13 +14,19 @@ data = cursor.fetchall()
 
 search = st.text_input("🔎 Cari Wilayah")
 
+# 🔥 normalisasi koordinat
+koordinat_fix = {k.strip().lower(): v for k,v in koordinat.items()}
+
 m = folium.Map(location=[1.5,99.5],zoom_start=6)
 
+# ================= MARKER =================
 for kode,nama in data:
 
-    if nama in koordinat:
+    nama_fix = nama.strip().lower()
 
-        lat,lon = koordinat[nama]
+    if nama_fix in koordinat_fix:
+
+        lat,lon = koordinat_fix[nama_fix]
 
         folium.Marker(
             [lat,lon],
@@ -28,6 +34,7 @@ for kode,nama in data:
             icon=folium.Icon(color="blue",icon="truck")
         ).add_to(m)
 
+# ================= SEARCH =================
 if search:
 
     cursor.execute("""
@@ -36,20 +43,18 @@ if search:
     WHERE nama_wilayah LIKE ?
     """,('%'+search+'%',))
 
-    hasil = cursor.fetchone()
+    hasil = cursor.fetchall()
 
-    if hasil:
+    for kode,nama in hasil:
 
-        kode,nama = hasil
+        st.success(f"📦 {kode}")
+        st.info(f"📍 {nama}")
 
-        st.success(f"📦 Kode Paket : {kode}")
-        st.info(f"📍 Wilayah : {nama}")
+        nama_fix = nama.strip().lower()
 
-        if nama in koordinat:
+        if nama_fix in koordinat_fix:
 
-            lat,lon = koordinat[nama]
-
-            m = folium.Map(location=[lat,lon],zoom_start=10)
+            lat,lon = koordinat_fix[nama_fix]
 
             folium.Marker(
                 [lat,lon],
@@ -57,6 +62,7 @@ if search:
                 icon=folium.Icon(color="red")
             ).add_to(m)
 
+# ================= ROUTE =================
 route = st.checkbox("🚚 Tampilkan Route Pengiriman")
 
 if route:
@@ -67,11 +73,13 @@ if route:
 
     for r in route_wilayah:
 
-        if r in koordinat:
-            points.append(koordinat[r])
+        r_fix = r.strip().lower()
+
+        if r_fix in koordinat_fix:
+            points.append(koordinat_fix[r_fix])
 
     if len(points)>1:
-
         folium.PolyLine(points,color="red",weight=4).add_to(m)
 
+# ================= SHOW MAP =================
 st_folium(m,width=1000,height=600)
