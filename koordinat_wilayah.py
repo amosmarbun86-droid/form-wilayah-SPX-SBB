@@ -55,7 +55,7 @@ koordinat = {
     "Angkola Timur": (1.4500, 99.3000),
     "Muara Batang Toru": (1.4000, 99.0500),
     "Lumban Julu": (2.5833, 99.1333),
-    "Lubuk Barumun": (1.3000, 99.8500),
+    "Lubuk barumun": (1.3000, 99.8500),   # disesuaikan DB
     "Sosa 2": (1.4200, 100.0200),
     "Sumbul": (2.6000, 98.5000),
     "Huristak": (1.5000, 99.9000),
@@ -64,10 +64,10 @@ koordinat = {
     "Salak": (2.5500, 98.3000),
     "Singkohor": (2.4000, 97.9000),
     "Ranto Baek-baek": (0.9000, 99.4000),
-    "Siantar Narumonda": (2.4500, 99.2000),
+    "Siantar Naromonda": (2.4500, 99.2000),  # disesuaikan DB
     "Simanindo": (2.6500, 98.8000),
     "Angkola Selatan": (1.4000, 99.2500),
-    "Palipi": (2.6500, 98.6000),
-    "Adian Koting": (2.1000, 98.7000),
+    "palipi": (2.6500, 98.6000),  # disesuaikan DB
+    "Adian koting": (2.1000, 98.7000),  # disesuaikan DB
     "Rundeng": (2.6500, 97.9500),
 }
