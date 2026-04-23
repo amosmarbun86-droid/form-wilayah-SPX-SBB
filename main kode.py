@@ -51,7 +51,7 @@ data_awal = [
 ("15","Dolok Sanggul",2.3303,98.7510),
 ("16","Pangururan",2.6426,98.7133),
 ("17","Sidikalang",2.7425,98.3125),
-("18-22","Sidikalang",2.7425,98.3125),  # duplicate aman
+("18-22","Sidikalang",2.7425,98.3125),
 ("23","Garoga",2.1400,98.7500),
 ("25","Balige",2.3333,99.0667),
 ("26","Padang Bolak",1.5000,99.7500),
@@ -113,20 +113,18 @@ data_awal = [
 ("93","Rundeng",2.6500,97.9500),
 ]
 
-# isi otomatis jika kosong
 cursor.execute("SELECT COUNT(*) FROM wilayah")
 if cursor.fetchone()[0] == 0:
-
-    for kode, nama, lat, lon in data_awal:
+    for kode,nama,lat,lon in data_awal:
 
         cursor.execute(
             "INSERT OR IGNORE INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
-            (kode, nama)
+            (kode,nama)
         )
 
         cursor.execute(
             "INSERT OR IGNORE INTO koordinat (nama_wilayah,lat,lon) VALUES (?,?,?)",
-            (nama, lat, lon)
+            (nama,lat,lon)
         )
 
     conn.commit()
@@ -168,7 +166,7 @@ if not st.session_state.login:
         else:
             st.error("Login salah")
 
-# ================= ADMIN =================
+# ================= DASHBOARD ADMIN =================
 else:
 
     st.title("Dashboard Admin Wilayah")
@@ -177,4 +175,97 @@ else:
         st.session_state.login=False
         st.rerun()
 
-    st.success("Data wilayah otomatis terisi dan siap digunakan ✔")
+    # ================= TAMBAH =================
+    st.subheader("Tambah Wilayah")
+
+    with st.form("form"):
+        kode = st.text_input("Kode Paket")
+        nama = st.text_input("Nama Wilayah")
+        lat = st.number_input("Latitude", format="%.6f")
+        lon = st.number_input("Longitude", format="%.6f")
+        simpan = st.form_submit_button("Simpan")
+
+    if simpan:
+
+        if not kode or not nama:
+            st.warning("Kode & nama wajib diisi")
+        else:
+            try:
+                cursor.execute(
+                    "INSERT INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
+                    (kode.strip(), nama.strip())
+                )
+
+                cursor.execute(
+                    "INSERT OR IGNORE INTO koordinat (nama_wilayah,lat,lon) VALUES (?,?,?)",
+                    (nama.strip(), lat, lon)
+                )
+
+                conn.commit()
+
+                st.success("Data berhasil ditambahkan")
+                st.rerun()
+
+            except:
+                st.error("Kode sudah ada")
+
+    # ================= DATA =================
+    st.subheader("Data Wilayah")
+
+    cursor.execute("SELECT id,kode_paket,nama_wilayah FROM wilayah")
+    data = cursor.fetchall()
+
+    if len(data) == 0:
+
+        st.warning("Belum ada data wilayah")
+
+    else:
+
+        for row in data:
+
+            col1,col2,col3 = st.columns([2,4,1])
+
+            col1.write(row[1])
+            col2.write(row[2])
+
+            if col3.button("Hapus",key=row[0]):
+
+                cursor.execute("DELETE FROM wilayah WHERE id=?", (row[0],))
+                cursor.execute("DELETE FROM koordinat WHERE nama_wilayah=?", (row[2],))
+
+                conn.commit()
+
+                st.success("Data dihapus")
+                st.rerun()
+
+    # ================= EDIT =================
+    st.divider()
+    st.subheader("Edit Wilayah")
+
+    if len(data) == 0:
+
+        st.warning("Belum ada data untuk diedit")
+
+    else:
+
+        pilih = st.selectbox(
+            "Pilih Wilayah",
+            data,
+            format_func=lambda x:f"{x[1]} | {x[2]}"
+        )
+
+        kode_baru = st.text_input("Kode Baru", pilih[1])
+        nama_baru = st.text_input("Wilayah Baru", pilih[2])
+
+        if st.button("Update"):
+
+            cursor.execute("""
+            UPDATE wilayah
+            SET kode_paket=?, nama_wilayah=?
+            WHERE id=?
+            """,(kode_baru.strip(), nama_baru.strip(), pilih[0]))
+
+            conn.commit()
+
+            st.success("Data diperbarui")
+            st.rerun()
