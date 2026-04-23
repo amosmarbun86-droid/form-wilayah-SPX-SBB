@@ -99,15 +99,14 @@ data_wilayah = [
 ("93","Rundeng"),
 ]
 
-# 🔥 SELALU SYNC DATA (tidak pakai data lama)
-cursor.execute("DELETE FROM wilayah")
-conn.commit()
-
-cursor.executemany(
-    "INSERT OR IGNORE INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
-    data_wilayah
-)
-conn.commit()
+# 🔥 insert hanya jika kosong
+cursor.execute("SELECT COUNT(*) FROM wilayah")
+if cursor.fetchone()[0] == 0:
+    cursor.executemany(
+        "INSERT INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
+        data_wilayah
+    )
+    conn.commit()
 
 # ================= LOGIN =================
 def hash_password(p):
@@ -131,13 +130,13 @@ if cursor.fetchone() is None:
 if "login" not in st.session_state:
     st.session_state.login=False
 
-# ================= LOGIN PAGE =================
+# ================= LOGIN =================
 if not st.session_state.login:
 
     st.title("Login Admin")
 
-    u=st.text_input("Username")
-    p=st.text_input("Password",type="password")
+    u = st.text_input("Username")
+    p = st.text_input("Password", type="password")
 
     if st.button("Login"):
         if login(u,p):
@@ -155,19 +154,63 @@ else:
         st.session_state.login=False
         st.rerun()
 
+    # ================= TAMBAH =================
+    st.subheader("Tambah Wilayah")
+
+    with st.form("form"):
+        kode = st.text_input("Kode Paket")
+        nama = st.text_input("Nama Wilayah")
+        simpan = st.form_submit_button("Simpan")
+
+    if simpan:
+        try:
+            cursor.execute(
+                "INSERT INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
+                (kode.strip(), nama.strip())
+            )
+            conn.commit()
+            st.success("Data berhasil disimpan")
+            st.rerun()
+        except:
+            st.error("Kode sudah ada")
+
     # ================= DATA =================
     st.subheader("Data Wilayah")
 
     cursor.execute("SELECT id,kode_paket,nama_wilayah FROM wilayah")
-    data=cursor.fetchall()
+    data = cursor.fetchall()
 
     for row in data:
-        col1,col2,col3=st.columns([2,4,1])
+
+        col1,col2,col3 = st.columns([2,4,1])
 
         col1.write(row[1])
         col2.write(row[2])
 
-        if col3.button("Hapus",key=row[0]):
+        if col3.button("Hapus", key=row[0]):
             cursor.execute("DELETE FROM wilayah WHERE id=?", (row[0],))
             conn.commit()
             st.rerun()
+
+    # ================= EDIT =================
+    st.divider()
+    st.subheader("Edit Wilayah")
+
+    pilih = st.selectbox(
+        "Pilih Wilayah",
+        data,
+        format_func=lambda x:f"{x[1]} | {x[2]}"
+    )
+
+    kode_baru = st.text_input("Kode Baru", pilih[1])
+    nama_baru = st.text_input("Wilayah Baru", pilih[2])
+
+    if st.button("Update"):
+        cursor.execute("""
+            UPDATE wilayah
+            SET kode_paket=?, nama_wilayah=?
+            WHERE id=?
+        """,(kode_baru.strip(), nama_baru.strip(), pilih[0]))
+        conn.commit()
+        st.success("Data diperbarui")
+        st.rerun()
