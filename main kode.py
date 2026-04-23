@@ -1,11 +1,16 @@
 import streamlit as st
 import sqlite3
 import hashlib
+import os
+import json
 
-# ================= DATABASE =================
-conn = sqlite3.connect("wilayah.db", check_same_thread=False)
+# ================= SETUP =================
+os.makedirs("data", exist_ok=True)
+
+conn = sqlite3.connect("data/wilayah.db", check_same_thread=False)
 cursor = conn.cursor()
 
+# ================= TABLE =================
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS admin (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,91 +26,46 @@ CREATE TABLE IF NOT EXISTS wilayah (
     nama_wilayah TEXT
 )
 """)
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS koordinat (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nama_wilayah TEXT UNIQUE,
+    lat REAL,
+    lon REAL
+)
+""")
+
 conn.commit()
 
-# ================= DATA AWAL =================
-data_wilayah = [
-("1","Siborong-borong"),
-("2","Gunung Meriah"),
-("3","Simpang Kiri"),
-("5","Penyabungan"),
-("6","Natal"),
-("11","Kota Pinang"),
-("12","Tarutung"),
-("13","Pandan"),
-("14","Barus"),
-("15","Dolok Sanggul"),
-("16","Pangururan"),
-("17","Sidikalang"),
-("18-22","Sidikalang"),
-("23","Garoga"),
-("25","Balige"),
-("26","Padang Bolak"),
-("27","Barumun"),
-("29","Padang Sidempuan Tenggara"),
-("30","Sayur Matinggi"),
-("32","Padang Sidempuan Batunadua"),
-("33","Padang Sidempuan Selatan"),
-("35","Porsea"),
-("36","Pinang Sori"),
-("37","Tapian Nauli"),
-("38","Pahae Jae"),
-("39","Sinunukan"),
-("40","Muara Sipongi"),
-("41","Batang Toru"),
-("42","Angkola Barat"),
-("43","Silangkitang"),
-("44","Halongonan"),
-("45","Kampung Rakyat"),
-("46","Sipirok"),
-("47","Sorkam"),
-("50","Sipahutar"),
-("51","Sosa"),
-("52","Aceh Singkil"),
-("53","Siabu"),
-("54","Sultan Daulat"),
-("55","Barumun Tengah"),
-("56","Batang Natal"),
-("57","Sirandorung"),
-("58","Pollung"),
-("59","Lintong Nihuta"),
-("60","Parlilitan"),
-("61","Simangambat"),
-("62","Muara Batang Gadis"),
-("63","Pakkat"),
-("64","Ulu Barumun"),
-("65","Simpang Kanan"),
-("66","Pahae Julu"),
-("67","Laguboti"),
-("69","Pangaribuan"),
-("70","Sipoholon"),
-("71","Angkola Timur"),
-("72","Muara Batang Toru"),
-("73","Lumban Julu"),
-("74","Lubuk barumun"),
-("75","Sosa 2"),
-("76","Sumbul"),
-("77","Huristak"),
-("78","Siempat Nempu"),
-("79","Hutaraja Tinggi"),
-("80","Salak"),
-("81","Singkohor"),
-("82","Ranto Baek-baek"),
-("84","Siantar Naromonda"),
-("86","Simanindo"),
-("90","Angkola Selatan"),
-("91","palipi"),
-("92","Adian koting"),
-("93","Rundeng"),
-]
+# ================= BACKUP =================
+def backup():
+    cursor.execute("SELECT kode_paket,nama_wilayah FROM wilayah")
+    wilayah = cursor.fetchall()
 
-# 🔥 insert hanya jika kosong
+    cursor.execute("SELECT nama_wilayah,lat,lon FROM koordinat")
+    koordinat = cursor.fetchall()
+
+    with open("data/backup.json","w") as f:
+        json.dump({"wilayah":wilayah,"koordinat":koordinat},f)
+
+# ================= RESTORE =================
 cursor.execute("SELECT COUNT(*) FROM wilayah")
-if cursor.fetchone()[0] == 0:
+if cursor.fetchone()[0] == 0 and os.path.exists("data/backup.json"):
+
+    with open("data/backup.json") as f:
+        data = json.load(f)
+
     cursor.executemany(
         "INSERT INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
-        data_wilayah
+        data["wilayah"]
     )
+
+    cursor.executemany(
+        "INSERT INTO koordinat (nama_wilayah,lat,lon) VALUES (?,?,?)",
+        data["koordinat"]
+    )
+
     conn.commit()
 
 # ================= LOGIN =================
@@ -130,13 +90,13 @@ if cursor.fetchone() is None:
 if "login" not in st.session_state:
     st.session_state.login=False
 
-# ================= LOGIN =================
+# ================= LOGIN PAGE =================
 if not st.session_state.login:
 
     st.title("Login Admin")
 
-    u = st.text_input("Username")
-    p = st.text_input("Password", type="password")
+    u=st.text_input("Username")
+    p=st.text_input("Password",type="password")
 
     if st.button("Login"):
         if login(u,p):
@@ -145,7 +105,7 @@ if not st.session_state.login:
         else:
             st.error("Login salah")
 
-# ================= DASHBOARD =================
+# ================= ADMIN =================
 else:
 
     st.title("Dashboard Admin Wilayah")
@@ -154,12 +114,14 @@ else:
         st.session_state.login=False
         st.rerun()
 
-    # ================= TAMBAH =================
-    st.subheader("Tambah Wilayah")
+    # ===== TAMBAH =====
+    st.subheader("Tambah Wilayah + Koordinat")
 
     with st.form("form"):
         kode = st.text_input("Kode Paket")
         nama = st.text_input("Nama Wilayah")
+        lat = st.number_input("Latitude", format="%.6f")
+        lon = st.number_input("Longitude", format="%.6f")
         simpan = st.form_submit_button("Simpan")
 
     if simpan:
@@ -168,13 +130,22 @@ else:
                 "INSERT INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
                 (kode.strip(), nama.strip())
             )
-            conn.commit()
-            st.success("Data berhasil disimpan")
-            st.rerun()
-        except:
-            st.error("Kode sudah ada")
 
-    # ================= DATA =================
+            cursor.execute(
+                "INSERT INTO koordinat (nama_wilayah,lat,lon) VALUES (?,?,?)",
+                (nama.strip(), lat, lon)
+            )
+
+            conn.commit()
+            backup()
+
+            st.success("Data tersimpan")
+            st.rerun()
+
+        except Exception as e:
+            st.error(e)
+
+    # ===== DATA =====
     st.subheader("Data Wilayah")
 
     cursor.execute("SELECT id,kode_paket,nama_wilayah FROM wilayah")
@@ -187,12 +158,16 @@ else:
         col1.write(row[1])
         col2.write(row[2])
 
-        if col3.button("Hapus", key=row[0]):
+        if col3.button("Hapus",key=row[0]):
+
             cursor.execute("DELETE FROM wilayah WHERE id=?", (row[0],))
+            cursor.execute("DELETE FROM koordinat WHERE nama_wilayah=?", (row[2],))
+
             conn.commit()
+            backup()
             st.rerun()
 
-    # ================= EDIT =================
+    # ===== EDIT =====
     st.divider()
     st.subheader("Edit Wilayah")
 
@@ -206,11 +181,19 @@ else:
     nama_baru = st.text_input("Wilayah Baru", pilih[2])
 
     if st.button("Update"):
+
         cursor.execute("""
-            UPDATE wilayah
-            SET kode_paket=?, nama_wilayah=?
-            WHERE id=?
+        UPDATE wilayah
+        SET kode_paket=?,nama_wilayah=?
+        WHERE id=?
         """,(kode_baru.strip(), nama_baru.strip(), pilih[0]))
+
         conn.commit()
-        st.success("Data diperbarui")
+        backup()
+
+        st.success("Update berhasil")
         st.rerun()
+
+    if st.button("Backup Sekarang"):
+        backup()
+        st.success("Backup OK")
