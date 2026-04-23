@@ -2,7 +2,6 @@ import streamlit as st
 import sqlite3
 import hashlib
 import os
-import json
 
 # ================= SETUP =================
 os.makedirs("data", exist_ok=True)
@@ -52,7 +51,7 @@ data_awal = [
 ("15","Dolok Sanggul",2.3303,98.7510),
 ("16","Pangururan",2.6426,98.7133),
 ("17","Sidikalang",2.7425,98.3125),
-("18-22","Sidikalang",2.7425,98.3125),
+("18-22","Sidikalang",2.7425,98.3125),  # duplicate aman
 ("23","Garoga",2.1400,98.7500),
 ("25","Balige",2.3333,99.0667),
 ("26","Padang Bolak",1.5000,99.7500),
@@ -118,16 +117,16 @@ data_awal = [
 cursor.execute("SELECT COUNT(*) FROM wilayah")
 if cursor.fetchone()[0] == 0:
 
-    for kode,nama,lat,lon in data_awal:
+    for kode, nama, lat, lon in data_awal:
 
         cursor.execute(
-            "INSERT INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
-            (kode,nama)
+            "INSERT OR IGNORE INTO wilayah (kode_paket,nama_wilayah) VALUES (?,?)",
+            (kode, nama)
         )
 
         cursor.execute(
-            "INSERT INTO koordinat (nama_wilayah,lat,lon) VALUES (?,?,?)",
-            (nama,lat,lon)
+            "INSERT OR IGNORE INTO koordinat (nama_wilayah,lat,lon) VALUES (?,?,?)",
+            (nama, lat, lon)
         )
 
     conn.commit()
@@ -154,7 +153,7 @@ if cursor.fetchone() is None:
 if "login" not in st.session_state:
     st.session_state.login=False
 
-# ================= LOGIN =================
+# ================= LOGIN PAGE =================
 if not st.session_state.login:
 
     st.title("Login Admin")
@@ -178,4 +177,4 @@ else:
         st.session_state.login=False
         st.rerun()
 
-    st.success("Data wilayah sudah otomatis terisi ✔")
+    st.success("Data wilayah otomatis terisi dan siap digunakan ✔")
