@@ -107,10 +107,13 @@ data_awal = [
 ("82","Ranto Baek-baek",0.9000,99.4000),
 ("84","Siantar Naromonda",2.4500,99.2000),
 ("86","Simanindo",2.6500,98.8000),
+("87","Sibabangun",1.830,98.7800),
 ("90","Angkola Selatan",1.4000,99.2500),
 ("91","palipi",2.6500,98.6000),
 ("92","Adian koting",2.1000,98.7000),
 ("93","Rundeng",2.6500,97.9500),
+("94","Tampahan",2.565,99.0600),
+("95","Saipar dolok",1.530,99.0500),
 ]
 
 cursor.execute("SELECT COUNT(*) FROM wilayah")
